@@ -4,6 +4,7 @@ import socket
 import rospy
 import sys
 import time
+import argparse
 
 from yumi_eneroth_bridge.msg import *
 from yumi_manager.msg import SceneObjects
@@ -64,6 +65,10 @@ class EnerothYumiClient():
             data="kernel;yumi_busy;"
             self.send_data(data)
             return;
+        elif msg.yumi_status ==2:
+            data="kernel;planningFailed;"
+            self.send_data(data)
+            return;
 
         data = 'kernel;update;'
         for obj in msg.array:
@@ -118,10 +123,18 @@ if __name__ == '__main__':
 
     rospy.init_node('yumi_eneroth_bridge')
 
-    enerothclient = EnerothYumiClient()
+    argparse = argparse.ArgumentParser(prog='eneroth_bridge.py');
+    argparse.add_argument("--host", type=str, help='Host address')
+    argparse.add_argument("--port", type=int, help='Host port', default=5000)
+
+
+    args = argparse.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+
+    enerothclient = EnerothYumiClient(host=args.host, port=args.port)
 
     if(not enerothclient.connect()):
-        sys.exit(-1)
+        rospy.signal_shutdown("Communication Error with the Server")
 
     rospy.loginfo("Yumi Eneroth bridge started...");
 
